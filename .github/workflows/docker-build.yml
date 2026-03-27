@@ -17,14 +17,12 @@ jobs:
       BUILD_CMD: run_cmake.sh
 
     steps:
-      # 1️⃣ 拉代码
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Fix script permission
         run: |
-          chmod +x ./**/*.sh || true
-          chmod +x *.sh || true
+          find . -type f -name "*.sh" -exec chmod +x {} \;
 
       - name: Build
         run: |
