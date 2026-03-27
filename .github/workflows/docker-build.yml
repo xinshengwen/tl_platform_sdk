@@ -27,6 +27,7 @@ jobs:
       - name: Run build in Docker
         shell: bash
         run: |
+          find . -type f -name "*.sh" -exec chmod +x {} \;
           docker run --rm \
             -v ${{ github.workspace }}:/workspace \
             ${{ env.IMAGE }} \
