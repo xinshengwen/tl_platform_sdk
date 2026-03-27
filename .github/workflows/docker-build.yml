@@ -29,7 +29,7 @@ jobs:
       - name: Build
         run: |
           echo "Platform: $PLATFORM"
-          ./${BUILD_CMD} $PLATFORM $APP_NAME
+          ${BUILD_CMD} $PLATFORM $APP_NAME
 
       - name: Collect artifacts
         run: |
