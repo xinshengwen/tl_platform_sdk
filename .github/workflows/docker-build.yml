@@ -2,7 +2,7 @@ name: docker-build-example
 
 on:
   push:
-    branches: [ main ]
+    branches: [ docker_cmake_build ]
   workflow_dispatch:
 
 env:
