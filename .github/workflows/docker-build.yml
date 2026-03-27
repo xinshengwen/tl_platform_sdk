@@ -1,50 +1,52 @@
-name: docker-build-example
+name: toolchain-build
 
 on:
   push:
-    branches: [ docker_cmake_build ]
+    branches: [ "docker_cmake_build" ]
   workflow_dispatch:
-
-env:
-  IMAGE: ghcr.io/xinshengwen/telink-dev-gcc12.2:1.0.0
-  BUILD_CMD: run_cmake.sh TL_PLATFORM_SDK_751X ADC_Demo
 
 jobs:
   build:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-      max-parallel: 1
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/xinshengwen/telink-dev-gcc12.2:1.0.0
+
+    env:
+      PLATFORM: TL_PLATFORM_SDK_751X
+      APP_NAME: ADC_Demo
+      BUILD_CMD: run_cmake.sh
 
     steps:
-      - name: Checkout source
+      # 1️⃣ 拉代码
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Pull Docker Image
-        run: docker pull ${{ env.IMAGE }}
-
-      - name: Run build in Docker
-        shell: bash
+      - name: Fix script permission
         run: |
-          find . -type f -name "*.sh" -exec chmod +x {} \;
-          docker run --rm \
-            -v ${{ github.workspace }}:/workspace \
-            ${{ env.IMAGE }} \
-            bash -c "cd /workspace && $BUILD_CMD"
+          chmod +x ./**/*.sh || true
+          chmod +x *.sh || true
+
+      - name: Build
+        run: |
+          echo "Platform: $PLATFORM"
+          ./${BUILD_CMD} $PLATFORM $APP_NAME
 
       - name: Collect artifacts
-        shell: bash
         run: |
           mkdir -p artifacts
+
           find cmake_builds -type f \( \
             -name "*.bin" -o \
             -name "*.elf" -o \
             -name "*.lst" \
           \) -exec cp --parents {} artifacts/ \;
 
+          echo "Artifacts:"
+          find artifacts
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.os }}
-          path: artifacts
+          name: build-output
+          path: artifacts/
+          retention-days: 7
