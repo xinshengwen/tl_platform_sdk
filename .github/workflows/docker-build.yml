@@ -1,0 +1,49 @@
+name: docker-build-example
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  IMAGE: ghcr.io/xinshengwen/telink-dev-gcc12.2:1.0.0
+  BUILD_CMD: run_cmake.sh TL_PLATFORM_SDK_751X ADC_Demo
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Pull Docker Image
+        run: docker pull ${{ env.IMAGE }}
+
+      - name: Run build in Docker
+        shell: bash
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/workspace \
+            ${{ env.IMAGE }} \
+            bash -c "cd /workspace && $BUILD_CMD"
+
+      - name: Collect artifacts
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          find cmake_builds -type f \( \
+            -name "*.bin" -o \
+            -name "*.elf" -o \
+            -name "*.lst" \
+          \) -exec cp --parents {} artifacts/ \;
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.os }}
+          path: artifacts
